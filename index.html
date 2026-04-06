@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomy of a Real M365 Tenant – Julien Ly</title>
+<meta name="description" content="A field audit of licensing drift, ungoverned data, missing device trust, identity debt, and the governance gap AI is about to expose.">
+<meta property="og:title" content="Anatomy of a Real M365 Tenant">
+<meta property="og:description" content="What the Field Taught Me About Identity, Security, and the Cost of Inaction">
+<meta property="og:type" content="article">
+<meta property="og:author" content="Julien Ly">
+<script async src="https://plausible.io/js/pa-Rhc91dkCLuMn5dDePG2lj.js"></script>
+<script>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12; --bg2: #141720; --bg3: #1c2030;
+    --border: rgba(255,255,255,0.08); --text: #e8eaf0; --muted: #8a90a0;
+    --accent: #4a9eff; --accent2: #7c6eff;
+    --tag-bg: rgba(74,158,255,0.1); --tag-border: rgba(74,158,255,0.25);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Instrument Sans', sans-serif; font-size: 17px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  .hero { position: relative; overflow: hidden; padding: 80px 24px 72px; border-bottom: 1px solid var(--border); }
+  .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 800px 500px at 60% -100px, rgba(74,158,255,0.08) 0%, transparent 70%), radial-gradient(ellipse 600px 400px at -10% 80%, rgba(124,110,255,0.06) 0%, transparent 70%); pointer-events: none; }
+  .hero-inner { max-width: 760px; margin: 0 auto; position: relative; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .tag { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; color: var(--accent); background: var(--tag-bg); border: 1px solid var(--tag-border); border-radius: 3px; padding: 3px 9px; text-transform: uppercase; }
+  .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 400; line-height: 1.12; letter-spacing: -0.01em; color: #ffffff; margin-bottom: 20px; }
+  .hero h1 em { font-style: italic; color: #c5d8ff; }
+  .subtitle { font-size: 18px; color: var(--muted); max-width: 560px; line-height: 1.6; margin-bottom: 36px; }
+  .byline { display: flex; align-items: center; gap: 14px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #1a2a4a, #2a1a4a); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: #8ab4ff; flex-shrink: 0; }
+  .byline-text { font-size: 14px; } .byline-name { color: var(--text); font-weight: 500; } .byline-role { color: var(--muted); font-size: 13px; }
+  .article-body { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; }
+  .act-label { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 12px; margin-top: 64px; display: block; }
+  .act-title { font-family: 'DM Serif Display', serif; font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 400; color: #ffffff; margin-bottom: 28px; line-height: 1.2; }
+  .layer-heading { font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-top: 44px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .layer-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .sub-heading { font-family: 'Instrument Sans', sans-serif; font-size: 15px; font-weight: 600; color: #c0c8e0; margin-top: 32px; margin-bottom: 12px; }
+  p { color: #c8ccd8; margin-bottom: 20px; font-size: 16.5px; }
+  .pullquote { margin: 36px 0; padding: 22px 28px; border-left: 2px solid var(--accent); background: var(--bg2); border-radius: 0 6px 6px 0; font-family: 'DM Serif Display', serif; font-size: 18.5px; font-style: italic; color: #dce3f5; line-height: 1.55; }
+  .audit-table { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 48px 0; font-size: 14px; }
+  .audit-table-header { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg3); border-bottom: 1px solid var(--border); }
+  .audit-table-header span { padding: 12px 20px; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .audit-table-header span:first-child { border-right: 1px solid var(--border); color: #5fa35f; }
+  .audit-table-header span:last-child { color: #c17a7a; }
+  .audit-row { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+  .audit-row:last-child { border-bottom: none; }
+  .audit-row span { padding: 13px 20px; line-height: 1.5; font-size: 13.5px; }
+  .audit-row span:first-child { border-right: 1px solid var(--border); color: #7ab87a; }
+  .audit-row span:last-child { color: #c48080; }
+  .article-footer { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; border-top: 1px solid var(--border); padding-top: 40px; }
+  .footer-author { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .footer-avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #1a2a4a, #2a1a4a); border: 1px solid rgba(74,158,255,0.3); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; color: #8ab4ff; flex-shrink: 0; }
+  .footer-name { font-weight: 600; font-size: 16px; color: #fff; }
+  .footer-role { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-top: 2px; }
+  .footer-note { font-size: 14px; color: var(--muted); line-height: 1.65; font-style: italic; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+  @media (max-width: 640px) { .audit-table-header, .audit-row { grid-template-columns: 1fr; } .audit-table-header span:first-child, .audit-row span:first-child { border-right: none; border-bottom: 1px solid var(--border); } }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="tag-row">
+      <span class="tag">Licensing</span><span class="tag">Data</span><span class="tag">Device</span><span class="tag">Identity</span><span class="tag">NIS2</span><span class="tag">Copilot</span>
+    </div>
+    <h1>Anatomy of a Real<br><em>M365 Tenant</em></h1>
+    <p class="subtitle">A field audit of licensing drift, ungoverned data, missing device trust, identity debt, and the governance gap AI is about to expose.</p>
+    <div class="byline">
+      <div class="avatar">JL</div>
+      <div class="byline-text">
+        <div class="byline-name"><a href="https://www.linkedin.com/in/julien-ly" style="color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.2);">Julien Ly</a></div>
+        <div class="byline-role">Independent Microsoft Identity &amp; Security Architect &middot; Entra ID, Intune, Zero Trust</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="article-body">
+  
+  <span class="act-label">Act I</span>
+  <h2 class="act-title">The Illusion</h2>
+  <p>Most of the time, I don't get called for an audit.</p>
+  <p>I get brought in on a mission with a vaguely worded job description, a loosely defined scope, no defined deliverables. The organization doesn't know exactly what they're looking for, because they don't know exactly what they have. But they have an urgent need: operational issues are piling up and becoming critical. I enter as an operational resource, on a role that recruiters try to sell as architecture. What happens next follows a pattern I've observed in the vast majority of environments I've worked in.</p>
+  <p>On my first day, I don't ask questions. I observe. I put myself in the shoes of a regular user, but with the eyes of an attacker. The onboarding, the team structure, and above all, I look at and analyze the workstation they hand me.</p>
+  <p>A workstation says a lot about the state of an organization. In thirty minutes, after a few observations, tests, and PowerShell/cmd commands, without admin access, without a console, I already have a partial reading of the security posture. Hardening, agents, application baseline, update status, encryption. From the first workstation, the first gaps appear.</p>
+  <p>Then I look at the documentation. If it exists, it's old. If it's up to date, it's scattered and incomplete. Sometimes there's just a PowerPoint to describe a critical component.</p>
+  <p>I go through the team's Teams conversations from before my arrival, I listen carefully to what's said in meetings, and I start asking questions. Field feedback, especially from those on the front line like user support, is essential to complete the picture. I compare what I see, read, and hear with what's supposed to be in place. The gaps that emerge are immediate and significant.</p>
+  <p>Behind the documentation, there's the user experience. Multiple accounts, different passwords for each tool, a KeePass sometimes deployed but poorly used (database left open permanently, which makes it a critical vulnerability), when it's not a notebook sitting next to the screen. Reference documents scattered across SharePoint, Confluence, OneNote, emails, and network drives. All of this generates a volume of support tickets that has nothing to do with a technical problem. It's the symptom of an environment that nobody has rationalized.</p>
+  <p>From there, I pull the thread. Each gap leads to the next. For example, a non-compliant workstation leads to the absence of device signal in Conditional Access. The absence of device signal leads to an MFA that verifies identity but not the device. MFA without device leads to access policies that exist on paper but protect nothing in practice. And when I go down into the Active Directory, that's where the real state of the infrastructure appears.</p>
+  <p>What I describe in this article are not isolated findings, nor the portrait of a specific organization. They are recurring patterns, anonymized and composited, observed across varied contexts, regardless of size, sector, or country. And almost none of them are visible in a GRC dashboard.</p>
+  <span class="act-label">Act II</span>
+  <h2 class="act-title">The Descent</h2>
+  <div class="layer-heading">Layer 1: The licensing gap</div>
+  <p>The first thing I check is what's been paid for versus what's been deployed.</p>
+  <p>In most organizations, the contract was negotiated by procurement during an Enterprise Agreement renewal, based on commercial terms. Rarely on security architecture. The security team, in its own silo, has only an approximate understanding of what the license covers. Some mention "E3", but the term alone is meaningless without specifying whether it's Office 365 E3, Microsoft 365 E3, or Office 365 E3 with EMS. The security capabilities differ significantly between these packages.</p>
+  <p>Conditional Access is technically available but configured in a basic way. Intune is licensed but rarely deployed beyond a pilot, or remains in hybrid mode (Hybrid Azure AD Join, supposedly temporary) on a permanent basis. Users still need Kerberos for file servers, unmigrated line-of-business applications, and VPN connectivity. And the endpoint baseline has never truly been redefined or modernized. The result: a product constrained by a join mode that doesn't leverage its capabilities, or added complexity with no real benefit.</p>
+  <p>Information Protection capabilities exist on paper. The features sit there, dormant. Some alerts go weeks without remediation. Self-Service Password Reset isn't activated because of the inherited configuration from the on-premises AD hybridization via Entra ID Connect.</p>
+  <p>The logs are another blind spot. Retention depends on the license: with an E3, unified audit logs are kept for 180 days. With an E5, up to a year. Logs are spread across multiple consoles (Entra ID, Intune, Defender, Purview, Azure AD Sign-ins), rarely centralized, and even more rarely exploited proactively. Sentinel is sometimes deployed, but often not optimized to finely cover the Microsoft Workplace perimeter. In practice: an investigation capability that exists in theory but in practice leaves blind spots on the most common events.</p>
+  <p>Alongside this, there is often best-of-breed tooling. A PAM, a SIEM, an EDR, sometimes a third-party IGA, an outsourced SOC that only partially covers the Microsoft 365 and endpoint perimeter. Each tool was purchased to address a specific need at a given point in time. But the overall picture is missing: how these tools articulate with each other, and with the Microsoft baseline. The problem is not the absence of tools. It's the absence of coherence between the tools.</p>
+  <div class="pullquote">Organizations don't fail audits because they bought the wrong licenses. They fail because they bought Zero Trust and deployed it on legacy systems.</div>
+  <div class="layer-heading">Layer 2: The data blind spot</div>
+  <p>The first visible problem is often the maintenance of file servers. Line-of-business applications that still rely on them, data accumulated over years that nobody can migrate without sorting first. This maintenance is one of the structural reasons the on-premises AD persists, and it represents a significant operational cost: servers, updates, backups, security through third-party tools. Meanwhile, almost all users work daily on SharePoint Online and OneDrive, through Microsoft's native cloud collaboration tools.</p>
+  <p>The question is not what files are in the tenant. It's who has access to them.</p>
+  <p>In most environments I've audited, data is not or barely classified. Sensitivity labels are absent or partially deployed. DLP policies are rare. HR records, financial projections, board presentations sit in SharePoint sites with inherited permissions that nobody takes the time to review anymore. And every Teams channel created over the past few years has generated its own Microsoft 365 group, its own SharePoint site, its own permission set, often without lifecycle governance. In a few years, hundreds or thousands of groups that nobody can inventory with confidence.</p>
+  <p>When I run a quick permissions audit, the finding comes back often. A standard user has read access to sites they've never visited. The access was not granted deliberately. It came from an "Everyone except external users" sharing link created a few years ago, whose existence had been forgotten.</p>
+  <p>This was already a problem. With Copilot, it changes scale. Copilot operates on the Microsoft 365 semantic index. It respects existing permissions. It does not create new access. But it removes the friction that used to hide ungoverned data: the fact that few people searched for it.</p>
+  <div class="pullquote">Copilot does not create new breaches. It surfaces the ones your users have been walking past for years.</div>
+  <p>That's what Copilot will index on Monday morning.</p>
+  <div class="layer-heading">Layer 3: The device gap</div>
+  <p>The GRC questionnaire checks the box "MFA deployed."</p>
+  <p>First, which MFA are we talking about? A legacy third-party MFA using custom controls based on SMS is not the same thing as a modern native Entra ID MFA based on biometrics.</p>
+  <p>So I check the Conditional Access policies.</p>
+  <p>Usually there are a few. Rarely does one require the device to be marked as compliant.</p>
+  <p>MFA is active. A user can authenticate from an unmanaged, unpatched, potentially compromised personal device, and access the tenant. The identity is verified. The device is not.</p>
+  <p>Data leakage doesn't only happen over the network. Without DLP at the device level, a USB drive, a print job, a PDF export, a personal cloud storage service is enough. Combined with absent or partial classification, there is almost always a path to exfiltrate data. And the barriers are often more political than technical: the CIO doesn't want to create friction with the business, and the justification comes back almost every time in the same form: "we don't need to go that far, we don't have data that sensitive."</p>
+  <p>Behind the workstation, there are the phones. Often personal, without MDM or MAM. The MFA runs on the employee's personal device, and as soon as managing these devices comes up, it becomes an HR and works council issue before it becomes a security issue. Projects stall for months. Meanwhile, unmanaged devices continue accessing the tenant.</p>
+  <p>Without Intune or another source of device compliance signal feeding state into Conditional Access, such as requiring the device to be marked as compliant, the "Zero Trust" label is aspirational at best. MFA without device signal is not Zero Trust. It's a checkbox.</p>
+  <p>When I ask "can you show me in real time which devices are accessing the tenant and which ones are compliant?", the answer doesn't come from a console. It comes from several emails and a meeting, because few people have access to the Intune dashboard and the inventory hasn't been cleaned up. Sometimes the answer simply doesn't exist.</p>
+  <div class="layer-heading">Layer 4: The identity debt</div>
+  <p>This is where the descent reaches the foundation.</p>
+  <h3 class="sub-heading">On-premises AD: accounts, privileges, and protocols</h3>
+  <p>The on-premises Active Directory, when it exists, is often the oldest, most complex, and least governed component of the identity infrastructure. And in hybrid environments, everything depends on it.</p>
+  <p>What I typically find: accounts with Domain Admin privileges, some of which are no longer justified. Service accounts with passwords unchanged for years, some protected by AdminSDHolder with no one knowing precisely why. Group memberships inherited through multiple levels of nesting that few people can still trace. Delegations set up for projects that ended long ago. An ADFS sometimes still in production because migrating the relying parties was never prioritized, accumulating patches, CVEs, and operational debt.</p>
+  <p>Kerberos and NTLM still active for legacy applications, visible through Event ID 4624 logs that few people monitor. AD trusts multiplying without documentation.</p>
+  <p>When I show the actual number of Domain Admins, say eighteen when the official count was six, the reaction is almost always the same. "We thought we had far fewer."</p>
+  <h3 class="sub-heading">Documentation and knowledge debt</h3>
+  <p>This is not negligence. Every one of these decisions was rational at the time. The AD grew organically. Teams changed. Documentation was lost or didn't keep up. Or more accurately, it was written, multiple times, by different people, on different platforms. A SharePoint site from a few years ago, a Confluence wiki nobody maintains, a procedure buried in a GLPI ticket, a OneNote shared by an admin who is no longer there. The documentation exists. It's just scattered, outdated, and gives a false sense of control.</p>
+  <h3 class="sub-heading">Attributes and provisioning</h3>
+  <p>Beneath the accounts and groups, there are the attributes. AD object attributes are rarely populated correctly: manager, department, location, jobTitle fields are filled inconsistently, and custom attribute extensions used by provisioning flows are rarely documented. This is the foundation on which often sits an identity provisioning system of considerable complexity: HRIS connectors, IGA rules, edge cases hardcoded into scripts that nobody maintains. When an employee joins, changes role, or leaves, their identity follows a path that nobody can draw end to end with certainty.</p>
+  <p>Attributes are the raw material of identity governance. When they are degraded, everything built on top of them (dynamic groups, provisioning rules, Conditional Access scoping, license assignment, Copilot scope) operates on false foundations.</p>
+  <h3 class="sub-heading">Non-human identities and shadow IT</h3>
+  <p>The identity debt doesn't stop at the on-premises AD. In Entra ID, App Registrations and Service Principals accumulate the same way: applications registered for a project or a test whose owner has left, with Graph permissions rarely reviewed, secrets that don't expire, and a consent framework permissive enough that users can grant third-party applications access to their data without security being aware. Not to mention shadow IT: SaaS applications adopted by business units without IT validation, connected to the tenant via OAuth, creating invisible data flows.</p>
+  <p>These are non-human identities. They don't appear in classic access reviews. And they sometimes have more privileges than a human user.</p>
+  <h3 class="sub-heading">The guardian of the temple</h3>
+  <p>And in many organizations, there is someone who has been there for fifteen or twenty years. They've watched every modernization project get announced, stall, and quietly get shelved. They've survived every wave of turnover. They know where every exception lives, which service account must not be touched, which GPO breaks the payroll application if you modify it. They carry the institutional memory that was never documented. They are often the CIO's most trusted technical advisor. And for exactly those reasons, they are also the hardest person to bring along when the trajectory finally changes. Not because they resist out of principle, but because experience has taught them that change rarely survives the next budget cycle. And as long as the operating model relies on that person's memory instead of observable state, the organization does not own its identity infrastructure. One person does.</p>
+  <h3 class="sub-heading">Tiering, PKI, and modernization</h3>
+  <p>Tiering the AD into Tier 0, 1, and 2 is often proposed as the answer. And it is part of the answer. But tiering an environment that has never been cleaned is not securing it. It's organizing the debt into layers. The other major legacy project is the PKI, often hosted on aging servers with configurations rarely reviewed. But Microsoft's real investment in modern identity capabilities is in Entra ID, not in the on-premises AD being kept on life support.</p>
+  <p>The cost of cleaning all of this up has been deferred in favor of more visible projects. But this debt is not dormant. A single PingCastle scan quantifies it in minutes. It is often one of the largest attack surfaces in the organization. And it is the foundation on which every hybrid identity flow depends.</p>
+  <div class="layer-heading">Layer 5: The chain nobody owns</div>
+  <p>At this point in the audit, the picture is taking shape. Licensing gaps, data barely classified, devices without compliance signal, an identity debt whose real state surprises those who thought they knew it, and NTLM running across the network.</p>
+  <p>Every one of these gaps is known. Any experienced architect or administrator has seen them. The problem is not awareness. It's ownership.</p>
+  <p>More often than not, identity is managed by one team. Endpoints by another. Data governance by a third, when it exists. Security operates in its own silo. Licensing is handled by procurement. And compliance is often a GRC function that produces dashboards from declarative questionnaires without ever opening a console.</p>
+  <p>Each team is competent within its perimeter. What's missing is the cross-functional view. Someone who sees the full chain: identity, device, data, security, licensing, compliance. Someone who understands that a Conditional Access policy is only as strong as the device signal feeding it, that device compliance is only meaningful if the identity behind it is governed, that data protection is only effective if the data is classified first.</p>
+  <p>These subjects are carried by drift, not by decision. And as long as nobody owns the chain end to end, the gaps persist.</p>
+  <div class="pullquote">If your GRC dashboard is green while NTLM is still enabled in production, you don't have a security framework. You have a story.</div>
+  <div class="audit-table">
+  <div class="audit-table-header">
+  <span>What the GRC dashboard says</span>
+  <span>What the tenant actually shows</span>
+  </div>
+  <div class="audit-row">
+  <span>MFA deployed for all users</span>
+  <span>Legacy SMS-based MFA on some perimeters, no device compliance requirement in Conditional Access</span>
+  </div>
+  <div class="audit-row">
+  <span>Zero Trust architecture in progress</span>
+  <span>NTLM active in production, legacy ADFS still running, no privileged access segmentation</span>
+  </div>
+  <div class="audit-row">
+  <span>Data classified and protected</span>
+  <span>Labels partially deployed, limited DLP, hundreds of ungoverned Teams groups with inherited permissions</span>
+  </div>
+  <div class="audit-row">
+  <span>Identity under control</span>
+  <span>Unjustified Domain Admins, ownerless Service Principals, no lifecycle governance for human and non-human identities</span>
+  </div>
+  </div>
+  <span class="act-label">Act III</span>
+  <h2 class="act-title">The Shift</h2>
+  <div class="layer-heading">NIS2 shifts where accountability sits</div>
+  <p>NIS2 is not a French regulation. It applies across all 27 EU member states. And for organizations subject to SEC reporting requirements in the US, the parallel is worth noting: the new SEC cyber disclosure rules impose their own set of obligations on incident reporting and risk governance.</p>
+  <p>The most significant shift under NIS2 is in accountability. Cybersecurity responsibility no longer rests solely with the IT department or the CISO. It sits with executive management. They are required to understand, oversee, and be accountable for the organization's security posture.</p>
+  <p>This is not a cosmetic change. It means that the gap between what the GRC dashboard shows and what the tenant actually looks like becomes a personal liability for the people at the top.</p>
+  <p>The regulatory framework is explicit: organizations will need to demonstrate control over their environment, not just declare compliance. Under NIS2, purely declarative security is no longer sufficient.</p>
+  <div class="layer-heading">GRC alone tends to stay declarative</div>
+  <p>The GRC framework is an essential building block. It structures gaps, prioritizes investments, tracks remediation, and gives the CIO a readable framework to present to the board.</p>
+  <p>But without connection to the technical reality, it remains exactly what NIS2 is trying to eliminate: a paper exercise.</p>
+  <p>The field audit, based on real data (configuration coherence, device state, identity governance, licensing usage, AD health, log exploitation), brings the proof. It produces a comprehensive document on which to build a precise and controlled target and trajectory. Without this factual foundation, the trajectory remains a wish.</p>
+  <p>The technical side alone hits inertia because nobody carries the chain. GRC alone tends to stay declarative. It's the articulation of both that actually moves things forward. But in reality, this articulation rarely happens. NIS2 might be what forces it.</p>
+  <div class="layer-heading">The cost of the in-between</div>
+  <p>Most organizations already have one foot in the Microsoft SaaS ecosystem. Exchange Online, Teams, OneDrive, an Entra ID tenant. They're already in.</p>
+  <p>The second foot often stays out. The on-premises AD is maintained, in hybridization with the cloud. ADFS is sometimes still in production. Legacy applications still authenticate through Kerberos and NTLM. Ungoverned data accumulates. And the cost of maintaining this in-between state is rarely measured.</p>
+  <p>This choice is not irrational. Keeping one foot out is a way to limit vendor lock-in, to avoid being subject to unilateral pricing policies from SaaS vendors, and to maintain a degree of autonomy.</p>
+  <p>But the in-between has a cost that is rarely quantified. And not only financial. Strategic, operational, and security-related. A high cost of maintaining legacy debt instead of investing in mastery and modernization.</p>
+  <p>Microsoft is not the only valid stack. But it is the only end-to-end stack: from the OS to the workstation, through identity, device, data, email, collaboration, governance, monitoring, remediation, security, and AI with Copilot. It's this native integration that changes the equation, not the brand.</p>
+  <p>Microsoft 365 E3 or E5 licenses look expensive in isolation. But the real calculation is the one that factors in the cost of the existing state: maintaining best-of-breed tools, the headcount needed to operate them, unremediated debt, operational inefficiency, and the cost of an incident on an ungoverned foundation. When you run that calculation against realistic trajectory scenarios, the ratio often reverses.</p>
+  <div class="layer-heading">What convergence looks like</div>
+  <p>Everything in this audit (the licensing gap, the ungoverned data, the device blind spot, the identity debt, the silos) is not just a list of security findings. It's the barrier to a shift that most organizations say they want but aren't ready for.</p>
+  <p>When the foundation is governed, Copilot stops being a risk and becomes what it was designed to be. AI agents that execute workflows, process documents, route decisions don't work on an ungoverned tenant. They work on a clean one. The ROI is not incremental. It's structural.</p>
+  <p>And the window is narrowing. The threat landscape of 2026 is not the one of 2020. Attackers already benefit from the same AI capabilities that organizations are still struggling to deploy defensively.</p>
+  <p>Security, cost, compliance, modernization. These are not separate workstreams. They are one trajectory. Govern identities, and you meet NIS2. Classify data, and you enable Copilot safely. Enforce device compliance, and you reduce your attack surface. Clean the identity foundation, and you remove one of the largest single points of failure. Drive all of them together as one trajectory, and you don't just pass the audit. You change the operating model.</p>
+  <div class="pullquote">The tools are already partly paid for. The regulations are already written. The attackers are already augmented. The only thing missing is the decision to own the chain.</div>
+  <span class="act-label">Conclusion</span>
+  <h2 class="act-title">Before defining a target, know your existing state</h2>
+  <p>Most organizations don't really know the state of their tenant. And the ones that think they do are often relying on a GRC dashboard that doesn't reflect reality.</p>
+  <p>The most operational form of sovereignty starts with mastering what you already have. Before talking about data localization or sovereign cloud, you need to talk about resilience: knowing what you have, who accesses it, and how it's protected. That's the prerequisite for everything else.</p>
+  <p>On localization, Microsoft has made significant progress in recent years: EU Data Boundary, Double Key Encryption (DKE), local Copilot data processing in several European countries. These mechanisms exist and work. But they're only useful if data is classified upstream. DKE is not meant to be applied to the entire tenant. Some data is sensitive, some less so. Classification governance is what makes it possible to target the right protections on the right perimeters, without unnecessarily burdening the whole environment.</p>
+  <p>Beyond regulatory compliance, the ground is being prepared for the agentic era. Autonomous AI agents that schedule meetings, process HR requests, generate financial reports, or route support tickets are already being deployed in the most advanced organizations. Each of these agents needs an identity, permissions, a data perimeter, and governance. On an ungoverned tenant, they are multiplied risks. On a governed tenant, they are structural productivity levers.</p>
+  <p>Know your tenant. Govern your identities. Classify your data. Control your access. And be capable of demonstrating it.</p>
+  <p>Operational mastery is a subject every organization can and must act on now, without waiting for NIS2 to be transposed into national law.</p>
+  <p>If you manage a Microsoft 365 tenant, start with three questions. Can you list all active App Registrations in your tenant and say who owns each one? Do you know which SharePoint sites are accessible through a global sharing link and which unmanaged devices are accessing the tenant right now? And who in your organization can answer both of those without sending three emails and scheduling a meeting?</p>
+  <p>The technical debt will not fix itself. And under NIS2, ignorance will no longer be a sufficient defense.</p>
+  <div class="pullquote">Most organizations are not insecure because they lack tools. They are insecure because they don't control what they already have.</div>
+  <hr class="divider">
+</div>
+
+<div class="article-footer">
+  <div class="footer-author">
+    <div class="footer-avatar">JL</div>
+    <div>
+      <div class="footer-name"><a href="https://www.linkedin.com/in/julien-ly" style="color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.2);">Julien Ly</a></div>
+      <div class="footer-role">Independent Microsoft Identity &amp; Security Architect<br>Entra ID &middot; Intune &middot; Zero Trust &middot; NIS2</div>
+    </div>
+  </div>
+  <p class="footer-note">This article is a consolidated version of an 8-part series published on LinkedIn in French: "Anatomie d'un tenant M365 r&eacute;el." The observations are drawn from recurring patterns observed during field audits across multiple organizations, anonymized and composited.</p>
+</div>
+</body>
+</html>
